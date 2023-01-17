@@ -1,0 +1,165 @@
+
+###################### Installing Required Libraries ##########################
+
+#Installing required packages
+install.packages("naivebayes")
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("ggfortify")
+
+#importing required packages
+library(dplyr)
+library(ggplot2)
+library(ggfortify)
+library(naivebayes)
+
+
+
+
+###################### Data Preparation ##########################
+
+#reading the dataset
+df <- read.csv(file.choose(), header = T)
+
+#dropping irrelevant columns(features)
+df$X = NULL
+df$Sex = NULL
+
+#displaying the summary of the data
+summary(df)
+
+#dropping all rows containing null value(s)
+df <- df[!is.na(df$ALB),]
+df <- df[!is.na(df$ALP),]
+df <- df[!is.na(df$ALT),]
+df <- df[!is.na(df$CHOL),]
+df <- df[!is.na(df$PROT),]
+
+
+#checking unique values in target column and changing it to factor type
+unique(df[c("Category")])
+df$Category[df$Category == "0s=suspect Blood Donor"] = "0=Blood Donor"
+df$Category = as.factor(df$Category)
+
+
+#Univariate Analysis
+ggplot(df, aes(factor(Category), fill = factor(Category))) + geom_bar()
+
+ggplot(df, aes(factor(Age), fill = 'red')) + geom_bar()
+
+
+#Converting continuous columns to categorical columns
+df$ALB[df$ALB < 34] = 1
+df$ALB[df$ALB >= 34 & df$ALB <= 54] = 2
+df$ALB[df$ALB > 54] = 3
+df$ALB = as.numeric(as.factor(df$ALB))
+
+df$ALP[df$ALP < 44] = 1
+df$ALP[df$ALP >= 44 & df$ALP <= 147] = 2
+df$ALP[df$ALP > 147] = 3
+df$ALP = as.numeric(as.factor(df$ALP))
+
+df$ALT[df$ALT < 4] = 1
+df$ALT[df$ALT >= 4 & df$ALT <= 36] = 2
+df$ALT[df$ALT > 36] = 3
+df$ALT = as.numeric(as.factor(df$ALT))
+
+df$AST[df$AST < 8] = 1
+df$AST[df$AST >= 8 & df$AST <= 33] = 2
+df$AST[df$AST > 33] = 3
+df$AST = as.numeric(as.factor(df$AST))
+
+df$BIL[df$BIL < 10] = 1
+df$BIL[df$BIL >= 10 & df$BIL <= 12] = 2
+df$BIL[df$BIL > 12] = 3
+df$BIL = as.numeric(as.factor(df$BIL))
+
+df$CHE[df$CHE < 8] = 1
+df$CHE[df$CHE >= 8 & df$CHE <= 18] = 2
+df$CHE[df$CHE > 18] = 3
+df$CHE = as.numeric(as.factor(df$CHE))
+
+df$CHOL[df$CHOL < 5.18] = 1
+df$CHOL[df$CHOL >= 5.18 & df$CHOL <= 6.18] = 2
+df$CHOL[df$CHOL > 6.18] = 3
+df$CHOL = as.numeric(as.factor(df$CHOL))
+
+df$CREA[df$CREA < 65.4] = 1
+df$CREA[df$CREA >= 65.4 & df$CREA <= 119.3] = 2
+df$CREA[df$CREA > 119.3] = 3
+df$CREA = as.numeric(as.factor(df$CREA))
+
+df$GGT[df$GGT < 5] = 1
+df$GGT[df$GGT >= 5 & df$GGT <= 40] = 2
+df$GGT[df$GGT > 40] = 3
+df$GGT = as.numeric(as.factor(df$GGT))
+
+df$PROT[df$PROT < 60] = 1
+df$PROT[df$PROT >=60 & df$PROT <= 83] = 2
+df$PROT[df$PROT > 83] = 3
+df$PROT = as.numeric(as.factor(df$PROT))
+
+summary(df)
+
+
+
+
+
+###################### Naive Bayes ##########################
+
+
+#Dividing the dataframe into train and test 
+ind = sample(2, nrow(df),replace = T, prob = c(0.8,0.2))
+train = df[ind == 1,]
+test = df[ind == 2,]
+
+
+#Building Naive bayes model
+model = naive_bayes(Category ~ ., data = train, usekernel = T)
+
+#Prediction on training set, confusion matrix and accuracy calculation
+pred1 = predict(model, train)
+(confMatrix = table(pred1,train$Category))
+sum(diag(confMatrix))/sum(confMatrix)
+
+#Prediction on testing set, confusion matrix and accuracy calculation
+pred2 = predict(model, test)
+(confMatrix2 = table(pred2,test$Category))
+sum(diag(confMatrix2))/sum(confMatrix2)
+
+
+
+
+
+
+
+
+###################### K-means Clustering ##########################
+
+
+#Removing first column which is the target column from the dataframe for unsupervised learning
+clusterData = df[,-c(1,1)]
+
+summary(clusterData)
+
+
+#Function to return optimum number of clusters
+wssplot = function(data, nc=15, seed=123)
+{
+  wss = (nrow(data)-1)*sum(apply(data, 2, var))
+  for(i in 2:nc){
+    set.seed(seed)
+    wss[i] = sum(kmeans(data, centers = i)$withinss)
+  }
+  plot(1:nc, wss, type="b", xlab="Number of Clusters",
+       ylab = "within groups sum of squares")
+}
+
+#Function called
+wssplot(clusterData)
+
+#Building the model
+KM = kmeans(clusterData, 4)
+
+#Plotting clusters
+autoplot(KM, clusterData, frame = TRUE)

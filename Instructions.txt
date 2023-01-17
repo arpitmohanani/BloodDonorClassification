@@ -1,0 +1,9 @@
+Steps to perform analysis in Rstudios-
+
+1. Open 'Hepatitis.R' file in Rstudios.
+2. Run the command of installing and using required libraries.
+3. After that, run the command to read the dataset. Windows file explorer will open. Choose 'HepatitisCdata.csv' file.
+4. Proceed with running the next commands in sequential manner.
+
+
+Note: There are two R files for our two different approaches. To see our second approach just use 'Hepatitis_factor.R' file in Step 1 above.
